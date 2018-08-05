@@ -8,8 +8,8 @@ Inspired the modules
 *   [rtfeldman/selectlist](http://package.elm-lang.org/packages/rtfeldman/selectlist/latest)
 *   [turboMaCk/lazy-tree-with-zipper](http://package.elm-lang.org/packages/turboMaCk/lazy-tree-with-zipper/latest)
 
-[`mapBy`](http://package.elm-lang.org/packages/miyamoen/select-list#mapBy) is main function in this package.
-Use [`mapBy`](http://package.elm-lang.org/packages/miyamoen/select-list#mapBy) in view.
+[`mapBy`](http://package.elm-lang.org/packages/miyamoen/select-list/latest#mapBy) is main function in this package.
+Use [`mapBy`](http://package.elm-lang.org/packages/miyamoen/select-list/latest#mapBy) in view.
 
 ```
     view : SelectList String -> Html Msg
