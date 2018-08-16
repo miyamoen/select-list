@@ -19,6 +19,7 @@ module SelectList
         , length
         , map
         , mapBy
+        , mapBy_
         , modify
         , moveToHead
         , moveToLast
@@ -34,15 +35,15 @@ module SelectList
 
 {-| Yet another SelectList implementation
 
-A SelectList is a nonempty list which always has exactly one element selected.
-It is an example of a list zipper).
+A SelectList is a non-empty list which always has exactly one element selected.
+It is an example of a list zipper.
 
-Inspired the modules
+Inspired by these modules
 
   - [rtfeldman/selectlist](http://package.elm-lang.org/packages/rtfeldman/selectlist/latest)
   - [turboMaCk/lazy-tree-with-zipper](http://package.elm-lang.org/packages/turboMaCk/lazy-tree-with-zipper/latest)
 
-[`mapBy`](#mapBy) is main function in this package.
+[`mapBy`](#mapBy) is the main function in this package.
 Use [`mapBy`](#mapBy) in view.
 
     view : SelectList String -> Html Msg
@@ -83,7 +84,7 @@ Use [`mapBy`](#mapBy) in view.
 
 # Transformations
 
-@docs selectAll, map, Position, mapBy
+@docs selectAll, map, Position, mapBy, mapBy_
 
 -}
 
@@ -530,7 +531,7 @@ type Position
 The transform function receives a `Position`
 and `SelectList` which selects a transformed element.
 
-[`mapBy`](#mapBy) is main function in this package.
+[`mapBy`](#mapBy) is the main function in this package.
 Use [`mapBy`](#mapBy) in view.
 
     view : SelectList String -> Html Msg
@@ -544,6 +545,8 @@ Use [`mapBy`](#mapBy) in view.
                         ]
                 )
                 selectList
+
+If you can not use non-empty list, use [`mapBy_`](#mapBy_) that receives `List` instead of `SelectList`.
 
 -}
 mapBy : (Position -> SelectList a -> b) -> SelectList a -> List b
@@ -561,3 +564,15 @@ mapBy f list =
                 |> List.map (f AfterSelected)
     in
     before ++ selected :: after
+
+
+{-| This receives `List` instead of `SelectList`.
+-}
+mapBy_ : (Position -> SelectList a -> b) -> List a -> List b
+mapBy_ f list =
+    case fromList list of
+        Just selectList ->
+            mapBy f selectList
+
+        Nothing ->
+            []
