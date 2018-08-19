@@ -213,7 +213,47 @@ step =
 transformations : Test
 transformations =
     describe "Transformations"
-        [ "selectAll"
+        [ describe "select"
+            [ selectListFuzz "fuzz" <|
+                \before a after ->
+                    let
+                        pred num =
+                            num > 5
+
+                        first =
+                            if pred a then
+                                Just a
+                            else
+                                case List.filter pred after |> List.head of
+                                    Nothing ->
+                                        List.filter pred before
+                                            |> List.reverse
+                                            |> List.head
+
+                                    Just num ->
+                                        Just num
+                    in
+                    SelectList.fromLists before a after
+                        |> SelectList.select pred
+                        |> Maybe.map SelectList.selected
+                        |> Expect.equal first
+            , "not found"
+                ==> (SelectList.fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+                        |> SelectList.select (\num -> num < 0)
+                    )
+                === Nothing
+            , "select the nearest after"
+                ==> (SelectList.fromLists [ 1, 2, 5 ] 4 [ 5, 5 ]
+                        |> SelectList.select ((==) 5)
+                    )
+                === Just (SelectList.fromLists [ 1, 2, 5, 4 ] 5 [ 5 ])
+            , "select the nearest before"
+                ==> (SelectList.fromLists [ 1, 2, 1 ] 4 [ 5, 6 ]
+                        |> SelectList.select ((==) 1)
+                    )
+                === Just (SelectList.fromLists [ 1, 2 ] 1 [ 4, 5, 6 ])
+            ]
+        , "selectAll"
             ==> (SelectList.fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
                     |> SelectList.selectAll
                 )

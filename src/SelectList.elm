@@ -24,6 +24,7 @@ module SelectList
         , moveToHead
         , moveToLast
         , prepend
+        , select
         , selectAll
         , selected
         , set
@@ -84,7 +85,7 @@ Use [`mapBy`](#mapBy) in view.
 
 # Transformations
 
-@docs selectAll, map, Position, mapBy, mapBy_
+@docs select, selectAll, map, Position, mapBy, mapBy_
 
 -}
 
@@ -465,6 +466,59 @@ insert dir x (SelectList before a after) =
 
         Before ->
             SelectList (a :: before) x after
+
+
+{-| Change the selected element to the nearest one which passes a predicate function.
+Find the list after selected element preferentially.
+
+    isEven num =
+    num % 2 == 0
+
+    fromLists [ 1, 2 ] 3 [ 4, 5, 6 ]
+    |> select isEven
+    == fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+
+-}
+select : (a -> Bool) -> SelectList a -> Maybe (SelectList a)
+select pred (SelectList before a after) =
+    selectHelp pred before a after
+        |> Maybe.map (\( before, a, after ) -> SelectList before a after)
+
+
+selectHelp : (a -> Bool) -> List a -> a -> List a -> Maybe ( List a, a, List a )
+selectHelp pred before a after =
+    case selectAfterHelp pred before a after of
+        Just selectList ->
+            Just selectList
+
+        Nothing ->
+            selectBeforeHelp pred before a after
+
+
+selectAfterHelp : (a -> Bool) -> List a -> a -> List a -> Maybe ( List a, a, List a )
+selectAfterHelp pred before a after =
+    if pred a then
+        Just ( before, a, after )
+    else
+        case after of
+            [] ->
+                Nothing
+
+            x :: xs ->
+                selectAfterHelp pred (a :: before) x xs
+
+
+selectBeforeHelp : (a -> Bool) -> List a -> a -> List a -> Maybe ( List a, a, List a )
+selectBeforeHelp pred before a after =
+    if pred a then
+        Just ( before, a, after )
+    else
+        case before of
+            [] ->
+                Nothing
+
+            x :: xs ->
+                selectBeforeHelp pred xs x (a :: after)
 
 
 
