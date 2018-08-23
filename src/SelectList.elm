@@ -1,38 +1,13 @@
-module SelectList
-    exposing
-        ( Direction(..)
-        , Position(..)
-        , SelectList(..)
-        , after
-        , afterLength
-        , append
-        , attempt
-        , before
-        , beforeLength
-        , delete
-        , fromList
-        , fromLists
-        , index
-        , insert
-        , isHead
-        , isLast
-        , length
-        , map
-        , mapBy
-        , mapBy_
-        , modify
-        , moveToHead
-        , moveToLast
-        , prepend
-        , select
-        , selectAll
-        , selected
-        , set
-        , singleton
-        , step
-        , steps
-        , toList
-        )
+module SelectList exposing
+    ( SelectList(..), fromLists, fromList, singleton
+    , toList, selected, listBefore, listAfter, index, isHead, isLast
+    , length, afterLength, beforeLength
+    , attempt, append, prepend
+    , Direction(..)
+    , modify, set, insert, delete
+    , step, steps, moveToHead, moveToLast
+    , select, selectAll, map, Position(..), mapBy, mapBy_
+    )
 
 {-| Yet another SelectList implementation
 
@@ -67,7 +42,7 @@ Use [`mapBy`](#mapBy) in view.
 
 # Query
 
-@docs toList, selected, before, after, index, isHead, isLast
+@docs toList, selected, listBefore, listAfter, index, isHead, isLast
 @docs length, afterLength, beforeLength
 
 
@@ -108,7 +83,8 @@ type SelectList a
 If empty, `Nothing`.
 
     fromList [] == Nothing
-    fromList [2, 3, 4] == Just (fromLists [] 2 [ 3, 4 ])
+
+    fromList [ 2, 3, 4 ] == Just (fromLists [] 2 [ 3, 4 ])
 
 -}
 fromList : List a -> Maybe (SelectList a)
@@ -174,24 +150,24 @@ selected (SelectList _ a _) =
 {-| Return the elements before the selected element.
 
     fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
-        |> before
+        |> listBefore
         == [ 1, 2, 3 ]
 
 -}
-before : SelectList a -> List a
-before (SelectList xs _ _) =
+listBefore : SelectList a -> List a
+listBefore (SelectList xs _ _) =
     List.reverse xs
 
 
 {-| Return the elements after the selected element.
 
     fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
-        |> after
+        |> listAfter
         == [ 5, 6 ]
 
 -}
-after : SelectList a -> List a
-after (SelectList _ _ xs) =
+listAfter : SelectList a -> List a
+listAfter (SelectList _ _ xs) =
     xs
 
 
@@ -363,8 +339,10 @@ steps : Direction -> Int -> SelectList a -> Maybe (SelectList a)
 steps dir n selectList =
     if n < 0 then
         Nothing
+
     else if n == 0 then
         Just selectList
+
     else
         step dir selectList
             |> Maybe.andThen (steps dir (n - 1))
@@ -482,7 +460,10 @@ Find the list after selected element preferentially.
 select : (a -> Bool) -> SelectList a -> Maybe (SelectList a)
 select pred (SelectList before a after) =
     selectHelp pred before a after
-        |> Maybe.map (\( before, a, after ) -> SelectList before a after)
+        |> Maybe.map
+            (\( nextBefore, next, nextAfter ) ->
+                SelectList nextBefore next nextAfter
+            )
 
 
 selectHelp : (a -> Bool) -> List a -> a -> List a -> Maybe ( List a, a, List a )
@@ -499,6 +480,7 @@ selectAfterHelp : (a -> Bool) -> List a -> a -> List a -> Maybe ( List a, a, Lis
 selectAfterHelp pred before a after =
     if pred a then
         Just ( before, a, after )
+
     else
         case after of
             [] ->
@@ -512,6 +494,7 @@ selectBeforeHelp : (a -> Bool) -> List a -> a -> List a -> Maybe ( List a, a, Li
 selectBeforeHelp pred before a after =
     if pred a then
         Just ( before, a, after )
+
     else
         case before of
             [] ->
@@ -610,14 +593,14 @@ mapBy f list =
             selectBefore list
                 |> List.map (f BeforeSelected)
 
-        selected =
+        transformed =
             f Selected list
 
         after =
             selectAfter list
                 |> List.map (f AfterSelected)
     in
-    before ++ selected :: after
+    before ++ transformed :: after
 
 
 {-| This receives `List` instead of `SelectList`.
