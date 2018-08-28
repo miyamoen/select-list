@@ -1,4 +1,4 @@
-module UpDown exposing (main)
+module UpDownWithReference exposing (main)
 
 import Browser
 import Html exposing (Html, div, text)
