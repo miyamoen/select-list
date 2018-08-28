@@ -605,11 +605,11 @@ mapBy f list =
 
 {-| This receives `List` instead of `SelectList`.
 -}
-mapBy_ : (Position -> SelectList a -> b) -> List a -> List b
+mapBy_ : (SelectList a -> b) -> List a -> List b
 mapBy_ f list =
     case fromList list of
         Just selectList ->
-            mapBy f selectList
+            mapBy (always f) selectList
 
         Nothing ->
             []
