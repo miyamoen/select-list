@@ -5,7 +5,7 @@ module SelectList exposing
     , attempt, append, prepend
     , Direction(..)
     , modify, set, insert, delete
-    , step, steps, moveToHead, moveToLast
+    , changePosition, changePositionToEnd, moveSelection, moveSelectionToEnd
     , select, selectAll, map, Position(..), mapBy, mapBy_
     )
 
@@ -53,9 +53,9 @@ Use [`mapBy`](#mapBy) in view.
 @docs modify, set, insert, delete
 
 
-# Step
+# Move
 
-@docs step, steps, moveToHead, moveToLast
+@docs changePosition, changePositionToEnd, moveSelection, moveSelectionToEnd
 
 
 # Transformations
@@ -293,19 +293,81 @@ type Direction
     | Before
 
 
-{-| A selectList selects a `Direction` element by a step.
+{-| -}
+moveSelection : Direction -> Int -> SelectList a -> Maybe (SelectList a)
+moveSelection dir n selectList =
+    if n < 0 then
+        Nothing
+
+    else if n == 0 then
+        Just selectList
+
+    else
+        moveSelectionHelp dir selectList
+            |> Maybe.andThen (moveSelection dir (n - 1))
+
+
+moveSelectionHelp : Direction -> SelectList a -> Maybe (SelectList a)
+moveSelectionHelp dir (SelectList before a after) =
+    case dir of
+        After ->
+            case after of
+                x :: xs ->
+                    Just <| SelectList (x :: before) a xs
+
+                [] ->
+                    Nothing
+
+        Before ->
+            case before of
+                x :: xs ->
+                    Just <| SelectList xs a (x :: after)
+
+                [] ->
+                    Nothing
+
+
+{-| -}
+moveSelectionToEnd : Direction -> SelectList a -> SelectList a
+moveSelectionToEnd dir selectList =
+    let
+        moveLength =
+            case dir of
+                After ->
+                    afterLength selectList
+
+                Before ->
+                    beforeLength selectList
+    in
+    attempt (moveSelection dir moveLength) selectList
+
+
+{-| A selectList selects a `Direction` element by `n` steps.
 
     fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
-        |> step After
-        == Just (fromLists [ 1, 2, 3, 4 ] 5 [ 6 ])
+        |> changePosition After 2
+        == Just (fromLists [ 1, 2, 3, 4, 5 ] 6 [])
 
-    fromLists [ 1, 2, 3 ] 4 []
-        |> step After
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> changePosition After 3
         == Nothing
 
 -}
-step : Direction -> SelectList a -> Maybe (SelectList a)
-step dir (SelectList before a after) =
+changePosition : Direction -> Int -> SelectList a -> Maybe (SelectList a)
+changePosition dir n selectList =
+    if n < 0 then
+        Nothing
+
+    else if n == 0 then
+        Just selectList
+
+    else
+        changePositionHelp dir selectList
+            |> Maybe.andThen (changePosition dir (n - 1))
+
+
+changePositionHelp : Direction -> SelectList a -> Maybe (SelectList a)
+changePositionHelp dir (SelectList before a after) =
     case dir of
         After ->
             case after of
@@ -324,52 +386,19 @@ step dir (SelectList before a after) =
                     Nothing
 
 
-{-| A selectList selects a `Direction` element by `n` steps.
+{-| -}
+changePositionToEnd : Direction -> SelectList a -> SelectList a
+changePositionToEnd dir selectList =
+    let
+        moveLength =
+            case dir of
+                After ->
+                    afterLength selectList
 
-    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
-        |> steps After 2
-        == Just (fromLists [ 1, 2, 3, 4, 5 ] 6 [])
-
-    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
-        |> steps After 3
-        == Nothing
-
--}
-steps : Direction -> Int -> SelectList a -> Maybe (SelectList a)
-steps dir n selectList =
-    if n < 0 then
-        Nothing
-
-    else if n == 0 then
-        Just selectList
-
-    else
-        step dir selectList
-            |> Maybe.andThen (steps dir (n - 1))
-
-
-{-| A selectList selects the first element of a selectList.
-
-    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
-        |> moveToHead
-        == fromLists [] 1 [ 2, 3, 4, 5, 6 ]
-
--}
-moveToHead : SelectList a -> SelectList a
-moveToHead ((SelectList before _ _) as selectList) =
-    attempt (steps Before <| List.length before) selectList
-
-
-{-| A selectList selects the last element of a selectList.
-
-    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
-        |> moveToHead
-        == fromLists [] 1 [ 2, 3, 4, 5, 6 ]
-
--}
-moveToLast : SelectList a -> SelectList a
-moveToLast ((SelectList _ _ after) as selectList) =
-    attempt (steps After <| List.length after) selectList
+                Before ->
+                    beforeLength selectList
+    in
+    attempt (changePosition dir moveLength) selectList
 
 
 {-| Modify the selected element using given function.
@@ -529,13 +558,13 @@ selectBefore : SelectList a -> List (SelectList a)
 selectBefore list =
     List.range 1 (beforeLength list)
         |> List.reverse
-        |> List.filterMap (\n -> steps Before n list)
+        |> List.filterMap (\n -> changePosition Before n list)
 
 
 selectAfter : SelectList a -> List (SelectList a)
 selectAfter list =
     List.range 1 (afterLength list)
-        |> List.filterMap (\n -> steps After n list)
+        |> List.filterMap (\n -> changePosition After n list)
 
 
 {-| Transform each element of the `SelectList`.
