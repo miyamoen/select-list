@@ -435,27 +435,30 @@ Returns Nothing if list of `After`/`Before` elements is empty.
 
     fromLists [ 1, 2, 3 ] 4 []
         |> delete After
+        == Just (fromLists [ 1, 2 ] 3 [])
+
+    fromLists [] 4 []
+        |> delete After
         == Nothing
 
 -}
 delete : Direction -> SelectList a -> Maybe (SelectList a)
 delete dir (SelectList before _ after) =
-    case dir of
-        After ->
-            case after of
-                x :: xs ->
-                    Just <| SelectList before x xs
+    case ( dir, before, after ) of
+        ( _, [], [] ) ->
+            Nothing
 
-                [] ->
-                    Nothing
+        ( _, x :: xs, [] ) ->
+            Just <| SelectList xs x []
 
-        Before ->
-            case before of
-                x :: xs ->
-                    Just <| SelectList xs x after
+        ( _, [], x :: xs ) ->
+            Just <| SelectList [] x xs
 
-                [] ->
-                    Nothing
+        ( After, _, x :: xs ) ->
+            Just <| SelectList before x xs
+
+        ( Before, x :: xs, _ ) ->
+            Just <| SelectList xs x after
 
 
 {-| Insert the new selected element, then move the old `After`/`Before`.
