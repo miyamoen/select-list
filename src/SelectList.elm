@@ -6,7 +6,8 @@ module SelectList exposing
     , Direction(..)
     , modify, set, insert, delete
     , changePosition, changePositionToEnd, moveSelection, moveSelectionToEnd
-    , select, selectAll, map, Position(..), mapBy, mapBy_
+    , select, selectAll
+    , map, Position(..), mapBy, mapBy_
     )
 
 {-| Yet another SelectList implementation
@@ -53,14 +54,15 @@ Use [`mapBy`](#mapBy) in view.
 @docs modify, set, insert, delete
 
 
-# Move
+# Select
 
 @docs changePosition, changePositionToEnd, moveSelection, moveSelectionToEnd
+@docs select, selectAll
 
 
 # Transformations
 
-@docs select, selectAll, map, Position, mapBy, mapBy_
+@docs map, Position, mapBy, mapBy_
 
 -}
 
@@ -293,7 +295,17 @@ type Direction
     | Before
 
 
-{-| -}
+{-| A selected element moves forward/backward.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> moveSelection Before 2
+        == Just (fromLists [ 1 ] 4 [ 2, 3, 5, 6 ])
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> moveSelection After 3
+        == Nothing
+
+-}
 moveSelection : Direction -> Int -> SelectList a -> Maybe (SelectList a)
 moveSelection dir n selectList =
     if n < 0 then
@@ -327,7 +339,17 @@ moveSelectionHelp dir (SelectList before a after) =
                     Nothing
 
 
-{-| -}
+{-| A selected element moves to head/last.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> moveSelectionToEnd Before
+        == Just (fromLists [] 4 [ 1, 2, 3, 5, 6 ])
+
+    fromLists [ 1, 2, 3, 5, 6 ] 4 []
+        |> moveSelectionToEnd After
+        == Nothing
+
+-}
 moveSelectionToEnd : Direction -> SelectList a -> SelectList a
 moveSelectionToEnd dir selectList =
     let
@@ -342,7 +364,7 @@ moveSelectionToEnd dir selectList =
     attempt (moveSelection dir moveLength) selectList
 
 
-{-| A selectList selects a `Direction` element by `n` steps.
+{-| A selectList selects a element before/after the selected element.
 
     fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
         |> changePosition After 2
@@ -386,7 +408,17 @@ changePositionHelp dir (SelectList before a after) =
                     Nothing
 
 
-{-| -}
+{-| A selectList selects a head/last element.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> changePositionToEnd After
+        == fromLists [ 1, 2, 3, 4, 5 ] 6 []
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> changePositionToEnd Before
+        == fromLists [] 1 [ 2, 3, 4, 5, 6 ]
+
+-}
 changePositionToEnd : Direction -> SelectList a -> SelectList a
 changePositionToEnd dir selectList =
     let
@@ -482,11 +514,11 @@ insert dir x (SelectList before a after) =
 Find the list after selected element preferentially.
 
     isEven num =
-    num % 2 == 0
+        num % 2 == 0
 
     fromLists [ 1, 2 ] 3 [ 4, 5, 6 ]
-    |> select isEven
-    == fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> select isEven
+        == fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
 
 -}
 select : (a -> Bool) -> SelectList a -> Maybe (SelectList a)
