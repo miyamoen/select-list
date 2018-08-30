@@ -5,8 +5,9 @@ It is an example of a list zipper.
 
 Inspired by these modules
 
-*   [rtfeldman/selectlist](http://package.elm-lang.org/packages/rtfeldman/selectlist/latest)
-*   [turboMaCk/lazy-tree-with-zipper](http://package.elm-lang.org/packages/turboMaCk/lazy-tree-with-zipper/latest)
+* [rtfeldman/selectlist](http://package.elm-lang.org/packages/rtfeldman/selectlist/latest)
+* [turboMaCk/lazy-tree-with-zipper](http://package.elm-lang.org/packages/turboMaCk/lazy-tree-with-zipper/latest)
+* [arowM/elm-reference](https://package.elm-lang.org/packages/arowM/elm-reference/latest/)
 
 [`mapBy`](http://package.elm-lang.org/packages/miyamoen/select-list/latest/SelectList#mapBy) is the main function in this package.
 Use [`mapBy`](http://package.elm-lang.org/packages/miyamoen/select-list/latest/SelectList#mapBy) in view.
@@ -24,3 +25,5 @@ Use [`mapBy`](http://package.elm-lang.org/packages/miyamoen/select-list/latest/S
                 )
                 selectList
 ```
+
+[example](https://github.com/miyamoen/select-list/tree/master/example)
