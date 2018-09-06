@@ -7,7 +7,7 @@ module SelectList exposing
     , modify, set, insert, delete
     , changePosition, changePositionToEnd, moveSelection, moveSelectionToEnd
     , select, selectAll
-    , map, Position(..), mapBy, mapBy_
+    , map, Position(..), selectedMap, selectedMap_
     )
 
 {-| Yet another SelectList implementation
@@ -20,13 +20,13 @@ Inspired by these modules
   - [rtfeldman/selectlist](http://package.elm-lang.org/packages/rtfeldman/selectlist/latest)
   - [turboMaCk/lazy-tree-with-zipper](http://package.elm-lang.org/packages/turboMaCk/lazy-tree-with-zipper/latest)
 
-[`mapBy`](#mapBy) is the main function in this package.
-Use [`mapBy`](#mapBy) in view.
+[`selectedMap`](#selectedMap) is the main function in this package.
+Use [`selectedMap`](#selectedMap) in view.
 
     view : SelectList String -> Html Msg
     view selectList =
         ul [] <|
-            SelectList.mapBy
+            SelectList.selectedMap
                 (\position item ->
                     li [ onClick (Set item) ]
                         [ text <| toString <| SelectList.index item
@@ -62,7 +62,7 @@ Use [`mapBy`](#mapBy) in view.
 
 # Transformations
 
-@docs map, Position, mapBy, mapBy_
+@docs map, Position, selectedMap, selectedMap_
 
 -}
 
@@ -614,7 +614,7 @@ map f (SelectList before a after) =
     SelectList (List.map f before) (f a) (List.map f after)
 
 
-{-| `Position` is used with [`mapBy`](#mapBy).
+{-| `Position` is used with [`selectedMap`](#selectedMap).
 
 `Position` is Selected if the selected element,
 BeforeSelected if an element before the selected element,
@@ -632,13 +632,13 @@ type Position
 The transform function receives a `Position`
 and `SelectList` which selects a transformed element.
 
-[`mapBy`](#mapBy) is the main function in this package.
-Use [`mapBy`](#mapBy) in view.
+[`selectedMap`](#selectedMap) is the main function in this package.
+Use [`selectedMap`](#selectedMap) in view.
 
     view : SelectList String -> Html Msg
     view selectList =
         ul [] <|
-            SelectList.mapBy
+            SelectList.selectedMap
                 (\position item ->
                     li [ onClick (Set item) ]
                         [ text <| toString <| SelectList.index item
@@ -647,11 +647,11 @@ Use [`mapBy`](#mapBy) in view.
                 )
                 selectList
 
-If you can not use non-empty list, use [`mapBy_`](#mapBy_) that receives `List` instead of `SelectList`.
+If you can not use non-empty list, use [`selectedMap_`](#selectedMap_) that receives `List` instead of `SelectList`.
 
 -}
-mapBy : (Position -> SelectList a -> b) -> SelectList a -> List b
-mapBy f list =
+selectedMap : (Position -> SelectList a -> b) -> SelectList a -> List b
+selectedMap f list =
     let
         before =
             selectBefore list
@@ -669,11 +669,11 @@ mapBy f list =
 
 {-| This receives `List` instead of `SelectList`.
 -}
-mapBy_ : (SelectList a -> b) -> List a -> List b
-mapBy_ f list =
+selectedMap_ : (SelectList a -> b) -> List a -> List b
+selectedMap_ f list =
     case fromList list of
         Just selectList ->
-            mapBy (always f) selectList
+            selectedMap (always f) selectList
 
         Nothing ->
             []

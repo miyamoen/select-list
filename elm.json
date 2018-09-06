@@ -1,7 +1,7 @@
 {
     "type": "package",
     "name": "miyamoen/select-list",
-    "summary": "A non-empty list in which exactly one element is always selected.",
+    "summary": "A non-empty list and one of zipper.",
     "license": "BSD-3-Clause",
     "version": "3.0.0",
     "exposed-modules": [
