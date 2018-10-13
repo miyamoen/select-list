@@ -2,7 +2,7 @@ module Types exposing
     ( SelectList(..)
     , fromLists, fromList, singleton
     , selected, listAfter, listBefore, toList
-    , reverseAppend
+    , loopIndex, reverseAppend
     )
 
 {-|
@@ -61,3 +61,15 @@ listAfter (SelectList _ _ xs) =
 reverseAppend : List a -> List a -> List a
 reverseAppend xs ys =
     List.foldl (::) ys xs
+
+
+loopIndex : Int -> SelectList a -> Int
+loopIndex n (SelectList before a after) =
+    let
+        beforeLength =
+            List.length before
+
+        allLenght =
+            beforeLength + List.length after + 1
+    in
+    modBy allLenght (n + beforeLength) - beforeLength

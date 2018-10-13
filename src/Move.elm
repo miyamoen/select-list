@@ -1,6 +1,12 @@
-module Move exposing (by, toHead, toLast)
+module Move exposing (by, whileLoopBy, toHead, toLast)
 
-import Types exposing (SelectList(..), reverseAppend, toList)
+{-|
+
+@docs by, whileLoopBy, toHead, toLast
+
+-}
+
+import Types exposing (SelectList(..), loopIndex, reverseAppend, toList)
 
 
 by : Int -> SelectList a -> SelectList a
@@ -19,6 +25,11 @@ by n ((SelectList before a after) as original) =
 
     else
         original
+
+
+whileLoopBy : Int -> SelectList a -> SelectList a
+whileLoopBy n selectList =
+    by (loopIndex n selectList) selectList
 
 
 toHead : SelectList a -> SelectList a

@@ -1,18 +1,18 @@
 module Select exposing
     ( beforeIf, afterIf
-    , by, head, last
+    , by, whileLoopBy, head, last
     , all, allBefore, allAfter
     )
 
 {-|
 
 @docs beforeIf, afterIf
-@docs by, head, last
+@docs by, whileLoopBy, head, last
 @docs all, allBefore, allAfter
 
 -}
 
-import Types exposing (SelectList(..), reverseAppend, toList)
+import Types exposing (SelectList(..), loopIndex, reverseAppend, toList)
 
 
 beforeIf : (a -> Bool) -> SelectList a -> Maybe (SelectList a)
@@ -63,6 +63,12 @@ by n (SelectList before a after) =
 
     else
         Just <| SelectList before a after
+
+
+whileLoopBy : Int -> SelectList a -> SelectList a
+whileLoopBy n selectList =
+    by (loopIndex n selectList) selectList
+        |> Maybe.withDefault selectList
 
 
 head : SelectList a -> SelectList a
