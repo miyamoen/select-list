@@ -63,6 +63,46 @@ move =
                     Expect.true "should be last or head"
                         (isLast res || isHead res)
             ]
+        , describe "whileLoopBy"
+            [ test "+2" <|
+                \_ ->
+                    fromLists [ 1, 2, 3 ] 4 [ 5, 6, 7 ]
+                        |> whileLoopBy 2
+                        |> equalSelectList [ 1, 2, 3, 5, 6 ] 4 [ 7 ]
+            , test "-1" <|
+                \_ ->
+                    fromLists [ 1, 2, 3 ] 4 [ 5, 6, 7 ]
+                        |> whileLoopBy -1
+                        |> equalSelectList [ 1, 2 ] 4 [ 3, 5, 6, 7 ]
+            , test ">length" <|
+                \_ ->
+                    fromLists [ 1, 2, 3 ] 4 [ 5, 6, 7 ]
+                        |> whileLoopBy 8
+                        |> equalSelectList [ 1, 2, 3, 5 ] 4 [ 6, 7 ]
+            , test "<length" <|
+                \_ ->
+                    fromLists [ 1, 2, 3 ] 4 [ 5, 6, 7 ]
+                        |> whileLoopBy -5
+                        |> equalSelectList [ 1, 2, 3, 5, 6 ] 4 [ 7 ]
+            , lengthFuzz "fuzz" <|
+                \before ( a, n ) after ->
+                    fromLists before a after
+                        |> whileLoopBy n
+                        |> whileLoopBy -n
+                        |> equalSelectList before a after
+            ]
+        , fuzzSegments "toHead" <|
+            \before a after ->
+                fromLists before a after
+                    |> toHead
+                    |> isHead
+                    |> Expect.true "should be head"
+        , fuzzSegments "toLast" <|
+            \before a after ->
+                fromLists before a after
+                    |> toLast
+                    |> isLast
+                    |> Expect.true "should be last"
         ]
 
 
