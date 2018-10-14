@@ -5,12 +5,12 @@ It is one of zipper.
 
 Inspired by these modules
 
-* [rtfeldman/selectlist](http://package.elm-lang.org/packages/rtfeldman/selectlist/latest)
-* [turboMaCk/lazy-tree-with-zipper](http://package.elm-lang.org/packages/turboMaCk/lazy-tree-with-zipper/latest)
+* [rtfeldman/selectlist](https://package.elm-lang.org/packages/rtfeldman/selectlist/latest)
+* [turboMaCk/lazy-tree-with-zipper](https://package.elm-lang.org/packages/turboMaCk/lazy-tree-with-zipper/latest)
 * [arowM/elm-reference](https://package.elm-lang.org/packages/arowM/elm-reference/latest/)
 
-[`selectedMap`](http://package.elm-lang.org/packages/miyamoen/select-list/latest/SelectList#selectedMap) is the main function in this package.
-Use [`selectedMap`](http://package.elm-lang.org/packages/miyamoen/select-list/latest/SelectList#selectedMap) in view.
+[`selectedMap`](https://package.elm-lang.org/packages/miyamoen/select-list/latest/SelectList#selectedMap) is the feature function in this package.
+Use `selectedMap` in view.
 
 ```
     view : SelectList String -> Html Msg
@@ -25,5 +25,21 @@ Use [`selectedMap`](http://package.elm-lang.org/packages/miyamoen/select-list/la
                 )
                 selectList
 ```
+Get a focused item and index from select list.
+`Position` describes whether it is selected, or not.
+
+Compared with `List.indexedMap`.
+
+```
+    selectedMap : (Position -> SelectList a -> b) -> SelectList a -> List b
+    indexedMap : (Int -> a -> b) -> List a -> List b
+```
+
+Unlike `indexedMap`, we can get full access to all elements in the list.
+And set new list to `Model`.
+
+If you don't use non-empty list, use [`selectedMapForList`](https://package.elm-lang.org/packages/miyamoen/select-list/latest/SelectList#selectedMapForList) that receives `List` instead of `SelectList`.
+
+`List.indexedMap` is replaced with `selectedMapForList` .
 
 [example](https://github.com/miyamoen/select-list/tree/master/example)
