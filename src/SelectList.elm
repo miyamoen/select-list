@@ -1,13 +1,18 @@
 module SelectList exposing
-    ( SelectList(..), fromLists, fromList, singleton
-    , toList, selected, listBefore, listAfter, index, isHead, isLast
-    , length, afterLength, beforeLength
-    , attempt, append, prepend
-    , Direction(..)
-    , modify, set, insert, delete
-    , changePosition, changePositionToEnd, moveSelection, moveSelectionToEnd
-    , select, selectAll
-    , map, Position(..), selectedMap, selectedMap_
+    ( SelectList
+    , fromLists, fromList, singleton
+    , toTuple, selected, listAfter, listBefore, toList
+    , isHead, isLast, isSingle
+    , length, beforeLength, afterLength, index
+    , reverse, attempt, delete, insertBefore, insertAfter
+    , map
+    , updateSelected, updateBefore, updateAfter
+    , replaceSelected, replaceBefore, replaceAfter
+    , Position(..), selectedMap, selectedMapForList
+    , moveBy, moveWhileLoopBy, moveToHead, moveToLast
+    , selectBeforeIf, selectAfterIf
+    , selectBy, selectWhileLoopBy, selectHead, selectLast
+    , selectAll, selectAllBefore, selectAllAfter
     )
 
 {-| Yet another SelectList implementation
@@ -20,8 +25,8 @@ Inspired by these modules
   - [rtfeldman/selectlist](http://package.elm-lang.org/packages/rtfeldman/selectlist/latest)
   - [turboMaCk/lazy-tree-with-zipper](http://package.elm-lang.org/packages/turboMaCk/lazy-tree-with-zipper/latest)
 
-[`selectedMap`](#selectedMap) is the main function in this package.
-Use [`selectedMap`](#selectedMap) in view.
+[`selectedMap`](#selectedMap) is the feature function in this package.
+Use `selectedMap` in view.
 
     view : SelectList String -> Html Msg
     view selectList =
@@ -38,49 +43,102 @@ Use [`selectedMap`](#selectedMap) in view.
 
 # Type
 
-@docs SelectList, fromLists, fromList, singleton
+@docs SelectList
+
+
+## Constructor
+
+@docs fromLists, fromList, singleton
+
+
+## Destructor
+
+@docs toTuple, selected, listAfter, listBefore, toList
 
 
 # Query
 
-@docs toList, selected, listBefore, listAfter, index, isHead, isLast
-@docs length, afterLength, beforeLength
+@docs isHead, isLast, isSingle
+@docs length, beforeLength, afterLength, index
 
 
-# Operations
+# Operation
 
-@docs attempt, append, prepend
-@docs Direction
-@docs modify, set, insert, delete
+@docs reverse, attempt, delete, insertBefore, insertAfter
+
+
+# Transform
+
+@docs map
+
+
+## Update
+
+@docs updateSelected, updateBefore, updateAfter
+
+
+### Replace
+
+Alias of update function.
+
+    replaceX x =
+        updateX (always x)
+
+@docs replaceSelected, replaceBefore, replaceAfter
+
+
+## Feature Functions
+
+@docs Position, selectedMap, selectedMapForList
+
+
+# Move
+
+Move selected element.
+
+@docs moveBy, moveWhileLoopBy, moveToHead, moveToLast
 
 
 # Select
 
-@docs changePosition, changePositionToEnd, moveSelection, moveSelectionToEnd
-@docs select, selectAll
+Select new element, otherwise move focus.
 
 
-# Transformations
+## Predicate
 
-@docs map, Position, selectedMap, selectedMap_
+@docs selectBeforeIf, selectAfterIf
+
+
+## Index
+
+@docs selectBy, selectWhileLoopBy, selectHead, selectLast
+
+
+## Multi
+
+@docs selectAll, selectAllBefore, selectAllAfter
 
 -}
+
+import Move
+import Operation
+import Query
+import Select
+import Transform
+import Types
+
+
+
+-- Types
 
 
 {-| A nonempty list which always has exactly one element selected.
-
-Create one using `fromLists`, `fromList` or `singleton`.
-
 -}
-type SelectList a
-    = SelectList (List a) a (List a)
+type alias SelectList a =
+    Types.SelectList a
 
 
-
--- constructor
-
-
-{-| A `SelectList` if list has elements.
+{-| Create a `SelectList` if list has elements.
 
 If empty, `Nothing`.
 
@@ -90,16 +148,11 @@ If empty, `Nothing`.
 
 -}
 fromList : List a -> Maybe (SelectList a)
-fromList list =
-    case list of
-        x :: xs ->
-            Just <| SelectList [] x xs
-
-        [] ->
-            Nothing
+fromList =
+    Types.fromList
 
 
-{-| A `SelectList`.
+{-| Create a `SelectList`.
 
     fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
         |> selected
@@ -107,21 +160,33 @@ fromList list =
 
 -}
 fromLists : List a -> a -> List a -> SelectList a
-fromLists before a after =
-    SelectList (List.reverse before) a after
+fromLists =
+    Types.fromLists
 
 
-{-| A `SelectList` containing exactly one element.
+{-| Create a `SelectList` containing exactly one element.
 
     singleton 3 == fromLists [] 3 []
 
 -}
 singleton : a -> SelectList a
-singleton a =
-    SelectList [] a []
+singleton =
+    Types.singleton
 
 
-{-| Return a `List` containing the elements in a `SelectList`.
+{-| Destruct `SelectList`.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> toTuple
+        == ( 1, 2, 3 ) 4 ( 5, 6 )
+
+-}
+toTuple : SelectList a -> ( List a, a, List a )
+toTuple =
+    Types.toTuple
+
+
+{-| Destruct `SelectList`.
 
     fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
         |> toList
@@ -129,12 +194,8 @@ singleton a =
 
 -}
 toList : SelectList a -> List a
-toList (SelectList before a after) =
-    List.reverse before ++ a :: after
-
-
-
--- Query
+toList =
+    Types.toList
 
 
 {-| Return the selected element.
@@ -145,8 +206,8 @@ toList (SelectList before a after) =
 
 -}
 selected : SelectList a -> a
-selected (SelectList _ a _) =
-    a
+selected =
+    Types.selected
 
 
 {-| Return the elements before the selected element.
@@ -157,8 +218,8 @@ selected (SelectList _ a _) =
 
 -}
 listBefore : SelectList a -> List a
-listBefore (SelectList xs _ _) =
-    List.reverse xs
+listBefore =
+    Types.listBefore
 
 
 {-| Return the elements after the selected element.
@@ -169,8 +230,12 @@ listBefore (SelectList xs _ _) =
 
 -}
 listAfter : SelectList a -> List a
-listAfter (SelectList _ _ xs) =
-    xs
+listAfter =
+    Types.listAfter
+
+
+
+-- Query
 
 
 {-| Check if the selected element is first element.
@@ -181,8 +246,8 @@ listAfter (SelectList _ _ xs) =
 
 -}
 isHead : SelectList a -> Bool
-isHead (SelectList before _ _) =
-    List.isEmpty before
+isHead =
+    Query.isHead
 
 
 {-| Check if the selected element is last element.
@@ -193,20 +258,13 @@ isHead (SelectList before _ _) =
 
 -}
 isLast : SelectList a -> Bool
-isLast (SelectList _ _ after) =
-    List.isEmpty after
+isLast =
+    Query.isLast
 
 
-{-| Index of the selected element.
-
-    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
-        |> index
-        == 3
-
--}
-index : SelectList a -> Int
-index =
-    beforeLength
+isSingle : SelectList a -> Bool
+isSingle =
+    Query.isSingle
 
 
 {-| Length of `SelectList`.
@@ -217,8 +275,8 @@ index =
 
 -}
 length : SelectList a -> Int
-length (SelectList before _ after) =
-    List.length before + 1 + List.length after
+length =
+    Query.length
 
 
 {-| Length of the elements before the selected element
@@ -229,8 +287,8 @@ length (SelectList before _ after) =
 
 -}
 beforeLength : SelectList a -> Int
-beforeLength (SelectList before _ _) =
-    List.length before
+beforeLength =
+    Query.beforeLength
 
 
 {-| Length of the elements after the selected element
@@ -241,12 +299,25 @@ beforeLength (SelectList before _ _) =
 
 -}
 afterLength : SelectList a -> Int
-afterLength (SelectList _ _ after) =
-    List.length after
+afterLength =
+    Query.afterLength
+
+
+{-| Index of the selected element.
+
+This is alias of `beforeLength`.
+
+    index =
+        beforeLength
+
+-}
+index : SelectList a -> Int
+index =
+    beforeLength
 
 
 
--- Operations
+-- Operation
 
 
 {-| Attempt to perform action over selectList and return original `SelectList`
@@ -262,317 +333,196 @@ attempt action selectList =
     Maybe.withDefault selectList <| action selectList
 
 
-{-| Add elements to the end of a `SelectList`.
+reverse : SelectList a -> SelectList a
+reverse =
+    Operation.reverse
+
+
+{-| Delete the selected element, then select an element after the selected.
+
+If a list after selected is empty, then select an element before the selected.
+
+Returns Nothing if SelectList has only single value.
 
     fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
-        |> append [ 7, 8 ]
-        |> toList
-        == [ 1, 2, 3, 4, 5, 6, 7, 8 ]
-
--}
-append : List a -> SelectList a -> SelectList a
-append list (SelectList before a after) =
-    SelectList before a (after ++ list)
-
-
-{-| Add elements to the beginning of a `SelectList`.
-
-    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
-        |> prepend [ 7, 8 ]
-        |> toList
-        == [ 7, 8, 1, 2, 3, 4, 5, 6 ]
-
--}
-prepend : List a -> SelectList a -> SelectList a
-prepend list (SelectList before a after) =
-    SelectList (before ++ List.reverse list) a after
-
-
-{-| `Direction`
--}
-type Direction
-    = After
-    | Before
-
-
-{-| A selected element moves forward/backward.
-
-    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
-        |> moveSelection Before 2
-        == Just (fromLists [ 1 ] 4 [ 2, 3, 5, 6 ])
-
-    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
-        |> moveSelection After 3
-        == Nothing
-
--}
-moveSelection : Direction -> Int -> SelectList a -> Maybe (SelectList a)
-moveSelection dir n selectList =
-    if n < 0 then
-        Nothing
-
-    else if n == 0 then
-        Just selectList
-
-    else
-        moveSelectionHelp dir selectList
-            |> Maybe.andThen (moveSelection dir (n - 1))
-
-
-moveSelectionHelp : Direction -> SelectList a -> Maybe (SelectList a)
-moveSelectionHelp dir (SelectList before a after) =
-    case dir of
-        After ->
-            case after of
-                x :: xs ->
-                    Just <| SelectList (x :: before) a xs
-
-                [] ->
-                    Nothing
-
-        Before ->
-            case before of
-                x :: xs ->
-                    Just <| SelectList xs a (x :: after)
-
-                [] ->
-                    Nothing
-
-
-{-| A selected element moves to head/last.
-
-    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
-        |> moveSelectionToEnd Before
-        == Just (fromLists [] 4 [ 1, 2, 3, 5, 6 ])
-
-    fromLists [ 1, 2, 3, 5, 6 ] 4 []
-        |> moveSelectionToEnd After
-        == Nothing
-
--}
-moveSelectionToEnd : Direction -> SelectList a -> SelectList a
-moveSelectionToEnd dir selectList =
-    let
-        moveLength =
-            case dir of
-                After ->
-                    afterLength selectList
-
-                Before ->
-                    beforeLength selectList
-    in
-    attempt (moveSelection dir moveLength) selectList
-
-
-{-| A selectList selects a element before/after the selected element.
-
-    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
-        |> changePosition After 2
-        == Just (fromLists [ 1, 2, 3, 4, 5 ] 6 [])
-
-    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
-        |> changePosition After 3
-        == Nothing
-
--}
-changePosition : Direction -> Int -> SelectList a -> Maybe (SelectList a)
-changePosition dir n selectList =
-    if n < 0 then
-        Nothing
-
-    else if n == 0 then
-        Just selectList
-
-    else
-        changePositionHelp dir selectList
-            |> Maybe.andThen (changePosition dir (n - 1))
-
-
-changePositionHelp : Direction -> SelectList a -> Maybe (SelectList a)
-changePositionHelp dir (SelectList before a after) =
-    case dir of
-        After ->
-            case after of
-                x :: xs ->
-                    Just <| SelectList (a :: before) x xs
-
-                [] ->
-                    Nothing
-
-        Before ->
-            case before of
-                x :: xs ->
-                    Just <| SelectList xs x (a :: after)
-
-                [] ->
-                    Nothing
-
-
-{-| A selectList selects a head/last element.
-
-    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
-        |> changePositionToEnd After
-        == fromLists [ 1, 2, 3, 4, 5 ] 6 []
-
-    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
-        |> changePositionToEnd Before
-        == fromLists [] 1 [ 2, 3, 4, 5, 6 ]
-
--}
-changePositionToEnd : Direction -> SelectList a -> SelectList a
-changePositionToEnd dir selectList =
-    let
-        moveLength =
-            case dir of
-                After ->
-                    afterLength selectList
-
-                Before ->
-                    beforeLength selectList
-    in
-    attempt (changePosition dir moveLength) selectList
-
-
-{-| Modify the selected element using given function.
-
-    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
-        |> modify (\selected -> 2 * selected)
-        == fromLists [ 1, 2, 3 ] 8 [ 5, 6 ]
-
--}
-modify : (a -> a) -> SelectList a -> SelectList a
-modify f (SelectList before a after) =
-    SelectList before (f a) after
-
-
-{-| Replace the selected element with new one.
-
-    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
-        |> set 10
-        == fromLists [ 1, 2, 3 ] 10 [ 5, 6 ]
-
--}
-set : a -> SelectList a -> SelectList a
-set a (SelectList before _ after) =
-    SelectList before a after
-
-
-{-| Delete the selected element, then select `After`/`Before` element.
-
-Returns Nothing if list of `After`/`Before` elements is empty.
-
-    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
-        |> delete After
+        |> delete
         == Just (fromLists [ 1, 2, 3 ] 5 [ 6 ])
 
     fromLists [ 1, 2, 3 ] 4 []
-        |> delete After
+        |> delete
         == Just (fromLists [ 1, 2 ] 3 [])
 
     fromLists [] 4 []
-        |> delete After
+        |> delete
         == Nothing
 
 -}
-delete : Direction -> SelectList a -> Maybe (SelectList a)
-delete dir (SelectList before _ after) =
-    case ( dir, before, after ) of
-        ( _, [], [] ) ->
-            Nothing
-
-        ( _, x :: xs, [] ) ->
-            Just <| SelectList xs x []
-
-        ( _, [], x :: xs ) ->
-            Just <| SelectList [] x xs
-
-        ( After, _, x :: xs ) ->
-            Just <| SelectList before x xs
-
-        ( Before, x :: xs, _ ) ->
-            Just <| SelectList xs x after
+delete : SelectList a -> Maybe (SelectList a)
+delete =
+    Operation.delete
 
 
-{-| Insert the new selected element, then move the old `After`/`Before`.
+{-| Insert new selected element, then move the old before it.
 
     fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
-        |> insert After 8
+        |> insertBefore 8
+        == fromLists [ 1, 2, 3, 4 ] 8 [ 5, 6 ]
+
+-}
+insertBefore : a -> SelectList a -> SelectList a
+insertBefore =
+    Operation.insertBefore
+
+
+{-| Insert new selected element, then move the old after it.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> insertAfter 8
         == fromLists [ 1, 2, 3 ] 8 [ 4, 5, 6 ]
 
 -}
-insert : Direction -> a -> SelectList a -> SelectList a
-insert dir x (SelectList before a after) =
-    case dir of
-        After ->
-            SelectList before x (a :: after)
-
-        Before ->
-            SelectList (a :: before) x after
+insertAfter : a -> SelectList a -> SelectList a
+insertAfter =
+    Operation.insertAfter
 
 
-{-| Change the selected element to the nearest one which passes a predicate function.
-Find the list after selected element preferentially.
 
-    isEven num =
-        num % 2 == 0
+-- Move
 
-    fromLists [ 1, 2 ] 3 [ 4, 5, 6 ]
-        |> select isEven
-        == fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+
+{-| Move a selected element by n steps.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> moveBy -2
+        == fromLists [ 1 ] 4 [ 2, 3, 5, 6 ]
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> moveBy 1
+        == fromLists [ 1, 2, 3, 5 ] 4 [ 6 ]
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> moveBy 3
+        == fromLists [ 1, 2, 3, 5, 6 ] 4 []
 
 -}
-select : (a -> Bool) -> SelectList a -> Maybe (SelectList a)
-select pred (SelectList before a after) =
-    selectHelp pred before a after
-        |> Maybe.map
-            (\( nextBefore, next, nextAfter ) ->
-                SelectList nextBefore next nextAfter
-            )
+moveBy : Int -> SelectList a -> SelectList a
+moveBy =
+    Move.by
 
 
-selectHelp : (a -> Bool) -> List a -> a -> List a -> Maybe ( List a, a, List a )
-selectHelp pred before a after =
-    case selectAfterHelp pred before a after of
-        Just selectList ->
-            Just selectList
-
-        Nothing ->
-            selectBeforeHelp pred before a after
+moveWhileLoopBy : Int -> SelectList a -> SelectList a
+moveWhileLoopBy =
+    Move.whileLoopBy
 
 
-selectAfterHelp : (a -> Bool) -> List a -> a -> List a -> Maybe ( List a, a, List a )
-selectAfterHelp pred before a after =
-    if pred a then
-        Just ( before, a, after )
+{-| Move a selected element to head.
 
-    else
-        case after of
-            [] ->
-                Nothing
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> moveToHead
+        == fromLists [] 4 [ 1, 2, 3, 5, 6 ]
 
-            x :: xs ->
-                selectAfterHelp pred (a :: before) x xs
+-}
+moveToHead : SelectList a -> SelectList a
+moveToHead =
+    Move.toHead
 
 
-selectBeforeHelp : (a -> Bool) -> List a -> a -> List a -> Maybe ( List a, a, List a )
-selectBeforeHelp pred before a after =
-    if pred a then
-        Just ( before, a, after )
+{-| Move a selected element to last.
 
-    else
-        case before of
-            [] ->
-                Nothing
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> moveToLast
+        == fromLists [ 1, 2, 3, 5, 6 ] 4 []
 
-            x :: xs ->
-                selectBeforeHelp pred xs x (a :: after)
+-}
+moveToLast : SelectList a -> SelectList a
+moveToLast =
+    Move.toLast
 
 
 
--- Transformations
+-- Select
 
 
-{-| List of all selectList.
+{-| Select the first element, before the old selected, that satisfies a predicate. If none match, return Nothing.
+
+    isOdd num =
+        modBy 2 num /= 0
+
+    fromLists [ 1, 2 ] 3 [ 4, 5, 6 ]
+        |> selectBeforeIf isOdd
+        == Just (fromLists [ 0 ] 1 [ 2, 3, 4, 5, 6 ])
+
+-}
+selectBeforeIf : (a -> Bool) -> SelectList a -> Maybe (SelectList a)
+selectBeforeIf =
+    Select.beforeIf
+
+
+{-| Select the first element, after the old selected, that satisfies a predicate. If none match, return Nothing.
+
+    isOdd num =
+        modBy 2 num /= 0
+
+    fromLists [ 1, 2 ] 3 [ 4, 5, 6 ]
+        |> selectAfterIf isOdd
+        == fromLists [ 1, 2, 3, 4 ] 5 [ 6 ]
+
+-}
+selectAfterIf : (a -> Bool) -> SelectList a -> Maybe (SelectList a)
+selectAfterIf =
+    Select.afterIf
+
+
+{-| Select an element by n steps.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> selectBy -1
+        == Just (fromLists [ 1, 2 ] 3 [ 4, 5, 6 ])
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> selectBy 2
+        == Just (fromLists [ 1, 2, 3, 4, 5 ] 6 [])
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> selectBy 3
+        == Nothing
+
+-}
+selectBy : Int -> SelectList a -> Maybe (SelectList a)
+selectBy =
+    Select.by
+
+
+selectWhileLoopBy : Int -> SelectList a -> SelectList a
+selectWhileLoopBy =
+    Select.whileLoopBy
+
+
+{-| Select a head element.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> selectHead
+        == fromLists [] 1 [ 2, 3, 4, 5, 6 ]
+
+-}
+selectHead : SelectList a -> SelectList a
+selectHead =
+    Select.head
+
+
+{-| Select a last element.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> selectLast
+        == fromLists [ 1, 2, 3, 4, 5 ] 6 []
+
+-}
+selectLast : SelectList a -> SelectList a
+selectLast =
+    Select.last
+
+
+{-| List of all SelectList.
 
     fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
         == [ fromLists [] 1 [ 2, 3, 4, 5, 6 ]
@@ -585,24 +535,43 @@ selectBeforeHelp pred before a after =
 
 -}
 selectAll : SelectList a -> List (SelectList a)
-selectAll list =
-    selectBefore list ++ list :: selectAfter list
+selectAll =
+    Select.all
 
 
-selectBefore : SelectList a -> List (SelectList a)
-selectBefore list =
-    List.range 1 (beforeLength list)
-        |> List.reverse
-        |> List.filterMap (\n -> changePosition Before n list)
+{-| List of all SelectList before the selected.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        == [ fromLists [] 1 [ 2, 3, 4, 5, 6 ]
+           , fromLists [ 1 ] 2 [ 3, 4, 5, 6 ]
+           , fromLists [ 1, 2 ] 3 [ 4, 5, 6 ]
+           , fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+           ]
+
+-}
+selectAllBefore : SelectList a -> List (SelectList a)
+selectAllBefore =
+    Select.allBefore
 
 
-selectAfter : SelectList a -> List (SelectList a)
-selectAfter list =
-    List.range 1 (afterLength list)
-        |> List.filterMap (\n -> changePosition After n list)
+{-| List of all SelectList after the selected.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        == [ fromLists [ 1, 2, 3, 4 ] 5 [ 6 ]
+           , fromLists [ 1, 2, 3, 4, 5 ] 6 []
+           ]
+
+-}
+selectAllAfter : SelectList a -> List (SelectList a)
+selectAllAfter =
+    Select.allAfter
 
 
-{-| Transform each element of the `SelectList`.
+
+-- Transform
+
+
+{-| Apply a function to every element of a `SelectList`.
 
     fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
         |> map (\num -> num * 2)
@@ -610,8 +579,52 @@ selectAfter list =
 
 -}
 map : (a -> b) -> SelectList a -> SelectList b
-map f (SelectList before a after) =
-    SelectList (List.map f before) (f a) (List.map f after)
+map =
+    Transform.map
+
+
+{-| Update the selected element using given function.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> updateSelected (\selected -> 2 * selected)
+        == fromLists [ 1, 2, 3 ] 8 [ 5, 6 ]
+
+-}
+updateSelected : (a -> a) -> SelectList a -> SelectList a
+updateSelected =
+    Transform.updateSelected
+
+
+{-| Replace the selected element with new one.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> replaceSelected 10
+        == fromLists [ 1, 2, 3 ] 10 [ 5, 6 ]
+
+-}
+replaceSelected : a -> SelectList a -> SelectList a
+replaceSelected a =
+    Transform.updateSelected (always a)
+
+
+updateBefore : (a -> a) -> SelectList a -> SelectList a
+updateBefore =
+    Transform.updateBefore
+
+
+replaceBefore : a -> SelectList a -> SelectList a
+replaceBefore a =
+    Transform.updateBefore (always a)
+
+
+updateAfter : (a -> a) -> SelectList a -> SelectList a
+updateAfter =
+    Transform.updateAfter
+
+
+replaceAfter : a -> SelectList a -> SelectList a
+replaceAfter a =
+    Transform.updateAfter (always a)
 
 
 {-| `Position` is used with [`selectedMap`](#selectedMap).
@@ -627,13 +640,24 @@ type Position
     | AfterSelected
 
 
-{-| Transform each element of the `SelectList`.
+convert : Transform.Position -> Position
+convert position =
+    case position of
+        Transform.BeforeSelected ->
+            BeforeSelected
 
-The transform function receives a `Position`
-and `SelectList` which selects a transformed element.
+        Transform.Selected ->
+            Selected
 
-[`selectedMap`](#selectedMap) is the main function in this package.
-Use [`selectedMap`](#selectedMap) in view.
+        Transform.AfterSelected ->
+            AfterSelected
+
+
+{-| Apply a function to every element of a `SelectList`.
+
+The transform function receives a `Position` and `SelectList` which selects a focused element.
+
+Use in view.
 
     view : SelectList String -> Html Msg
     view selectList =
@@ -647,33 +671,47 @@ Use [`selectedMap`](#selectedMap) in view.
                 )
                 selectList
 
-If you can not use non-empty list, use [`selectedMap_`](#selectedMap_) that receives `List` instead of `SelectList`.
+Get a focused item and index from select list.
+`Position` describes whether it is selected, or not.
+
+Compared with `List.indexedMap`.
+
+    selectedMap : (Position -> SelectList a -> b) -> SelectList a -> List b
+
+    indexedMap : (Int -> a -> b) -> List a -> List b
+
+Unlike `indexedMap`, we can get full access to all elements in the list.
+And set new list to `Model`.
+
+If you don't use non-empty list, use [`selectedMapForList`](#selectedMapForList) that receives `List` instead of `SelectList`.
 
 -}
 selectedMap : (Position -> SelectList a -> b) -> SelectList a -> List b
-selectedMap f list =
-    let
-        before =
-            selectBefore list
-                |> List.map (f BeforeSelected)
-
-        transformed =
-            f Selected list
-
-        after =
-            selectAfter list
-                |> List.map (f AfterSelected)
-    in
-    before ++ transformed :: after
+selectedMap f =
+    Transform.selectedMap (\pos list -> f (convert pos) list)
 
 
-{-| This receives `List` instead of `SelectList`.
+{-| Apply a function to every element of a `List`.
+
+The transform function receives a `SelectList` which selects a focused element.
+
+Use in view.
+
+    view : SelectList String -> Html Msg
+    view selectList =
+        ul [] <|
+            SelectList.selectedMapForList
+                (\item ->
+                    li [ onClick (Set <| SelectList.toList <| SelectList.update updateFunction item) ]
+                        [ text <| toString <| SelectList.index item
+                        , toString <| SelectList.selected item
+                        ]
+                )
+                selectList
+
+Use this instead of `indexedMap`.
+
 -}
-selectedMap_ : (SelectList a -> b) -> List a -> List b
-selectedMap_ f list =
-    case fromList list of
-        Just selectList ->
-            selectedMap (always f) selectList
-
-        Nothing ->
-            []
+selectedMapForList : (SelectList a -> b) -> List a -> List b
+selectedMapForList =
+    Transform.selectedMapForList

@@ -1,7 +1,7 @@
 module Types exposing
     ( SelectList(..)
     , fromLists, fromList, singleton
-    , selected, listAfter, listBefore, toList
+    , toTuple, selected, listAfter, listBefore, toList
     , loopIndex, reverseAppend
     )
 
@@ -9,7 +9,7 @@ module Types exposing
 
 @docs SelectList
 @docs fromLists, fromList, singleton
-@docs selected, listAfter, listBefore, toList
+@docs toTuple, selected, listAfter, listBefore, toList
 
 -}
 
@@ -36,6 +36,11 @@ fromLists before a after =
 singleton : a -> SelectList a
 singleton a =
     SelectList [] a []
+
+
+toTuple : SelectList a -> ( List a, a, List a )
+toTuple (SelectList before a after) =
+    ( List.reverse before, a, after )
 
 
 toList : SelectList a -> List a
