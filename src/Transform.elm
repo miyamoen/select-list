@@ -1,14 +1,14 @@
 module Transform exposing
-    ( map
-    , Position(..), selectedMap, selectedMapForList
+    ( map, mapBefore, mapAfter
     , updateSelected, updateBefore, updateAfter
+    , Position(..), selectedMap, selectedMapForList
     )
 
 {-|
 
-@docs map
-@docs Position, selectedMap, selectedMapForList
+@docs map, mapBefore, mapAfter
 @docs updateSelected, updateBefore, updateAfter
+@docs Position, selectedMap, selectedMapForList
 
 -}
 
@@ -21,19 +21,29 @@ map f (SelectList before a after) =
     SelectList (List.map f before) (f a) (List.map f after)
 
 
+mapBefore : (a -> a) -> SelectList a -> SelectList a
+mapBefore f list =
+    updateBefore (List.map f) list
+
+
+mapAfter : (a -> a) -> SelectList a -> SelectList a
+mapAfter f list =
+    updateAfter (List.map f) list
+
+
 updateSelected : (a -> a) -> SelectList a -> SelectList a
 updateSelected f (SelectList before a after) =
     SelectList before (f a) after
 
 
-updateBefore : (a -> a) -> SelectList a -> SelectList a
+updateBefore : (List a -> List a) -> SelectList a -> SelectList a
 updateBefore f (SelectList before a after) =
-    SelectList (List.reverse before |> List.map f |> List.reverse) a after
+    SelectList (List.reverse before |> f |> List.reverse) a after
 
 
-updateAfter : (a -> a) -> SelectList a -> SelectList a
+updateAfter : (List a -> List a) -> SelectList a -> SelectList a
 updateAfter f (SelectList before a after) =
-    SelectList before a (List.map f after)
+    SelectList before a (f after)
 
 
 type Position

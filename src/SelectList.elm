@@ -5,7 +5,7 @@ module SelectList exposing
     , isHead, isLast, isSingle
     , length, beforeLength, afterLength, index
     , reverse, attempt, delete, insertBefore, insertAfter
-    , map
+    , map, mapBefore, mapAfter
     , updateSelected, updateBefore, updateAfter
     , replaceSelected, replaceBefore, replaceAfter
     , Position(..), selectedMap, selectedMapForList
@@ -69,7 +69,7 @@ Use `selectedMap` in view.
 
 # Transform
 
-@docs map
+@docs map, mapBefore, mapAfter
 
 
 ## Update
@@ -583,6 +583,30 @@ map =
     Transform.map
 
 
+{-| Apply a function to elements before the selected element.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> mapBefore (\selected -> 2 * selected)
+        == fromLists [ 2, 4, 6 ] 4 [ 5, 6 ]
+
+-}
+mapBefore : (a -> a) -> SelectList a -> SelectList a
+mapBefore =
+    Transform.mapBefore
+
+
+{-| Apply a function to elements after the selected element.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> mapAfter (\selected -> 2 * selected)
+        == fromLists [ 1, 2, 3 ] 4 [ 10, 12 ]
+
+-}
+mapAfter : (a -> a) -> SelectList a -> SelectList a
+mapAfter =
+    Transform.mapAfter
+
+
 {-| Update the selected element using given function.
 
     fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
@@ -607,24 +631,52 @@ replaceSelected a =
     Transform.updateSelected (always a)
 
 
-updateBefore : (a -> a) -> SelectList a -> SelectList a
+{-| Update elements before the selected element using given function.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> updateBefore (\before -> List.map ((*) 2) before)
+        == fromLists [ 2, 4, 6 ] 4 [ 5, 6 ]
+
+-}
+updateBefore : (List a -> List a) -> SelectList a -> SelectList a
 updateBefore =
     Transform.updateBefore
 
 
-replaceBefore : a -> SelectList a -> SelectList a
-replaceBefore a =
-    Transform.updateBefore (always a)
+{-| Replace elements before the selected element with new elements.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> replaceBefore [ 7, 8 ]
+        == fromLists [ 7, 8 ] 4 [ 5, 6 ]
+
+-}
+replaceBefore : List a -> SelectList a -> SelectList a
+replaceBefore xs =
+    Transform.updateBefore (always xs)
 
 
-updateAfter : (a -> a) -> SelectList a -> SelectList a
+{-| Update elements after the selected element using given function.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> updateBefore (\after -> List.map ((*) 2) after)
+        == fromLists [ 1, 2, 3 ] 4 [ 10, 12 ]
+
+-}
+updateAfter : (List a -> List a) -> SelectList a -> SelectList a
 updateAfter =
     Transform.updateAfter
 
 
-replaceAfter : a -> SelectList a -> SelectList a
-replaceAfter a =
-    Transform.updateAfter (always a)
+{-| Replace elements after the selected element with new elements.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> replaceAfter [ 9, 10, 11 ]
+        == fromLists [ 1, 2, 3 ] 4 [ 9, 10, 11 ]
+
+-}
+replaceAfter : List a -> SelectList a -> SelectList a
+replaceAfter xs =
+    Transform.updateAfter (always xs)
 
 
 {-| `Position` is used with [`selectedMap`](#selectedMap).
