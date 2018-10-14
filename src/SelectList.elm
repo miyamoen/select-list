@@ -262,6 +262,13 @@ isLast =
     Query.isLast
 
 
+{-| Check if the selected element is only element in select list.
+
+    fromLists [] 4 []
+        |> isSingle
+        == True
+
+-}
 isSingle : SelectList a -> Bool
 isSingle =
     Query.isSingle
@@ -333,6 +340,13 @@ attempt action selectList =
     Maybe.withDefault selectList <| action selectList
 
 
+{-| Reverse a select list. Pivot is selected element.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> reverse
+        == fromLists [ 6, 5 ] 4 [ 3, 2, 1 ]
+
+-}
 reverse : SelectList a -> SelectList a
 reverse =
     Operation.reverse
@@ -391,6 +405,7 @@ insertAfter =
 
 
 {-| Move a selected element by n steps.
+Pass an index over the length, then move to head/last.
 
     fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
         |> moveBy -2
@@ -410,6 +425,18 @@ moveBy =
     Move.by
 
 
+{-| Move a selected element by n steps while loop.
+Pass an index over the length, then loop.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> moveWhileLoopBy 4
+        == fromLists [ 1 ] 4 [ 2, 3, 5, 6 ]
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> moveWhileLoopBy -4
+        == fromLists [ 1 2, 3, 5, 6 ] 4 []
+
+-}
 moveWhileLoopBy : Int -> SelectList a -> SelectList a
 moveWhileLoopBy =
     Move.whileLoopBy
@@ -474,6 +501,7 @@ selectAfterIf =
 
 
 {-| Select an element by n steps.
+Pass an index over the length, then returns Nothing.
 
     fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
         |> selectBy -1
@@ -493,6 +521,18 @@ selectBy =
     Select.by
 
 
+{-| Select an element by n steps while loop.
+Pass an index over the length, then loop.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> selectWhileLoopBy 3
+        == fromLists [] 1 [ 2, 3, 4, 5, 6 ]
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> selectWhileLoopBy -5
+        == fromLists [ 1, 2, 3, 4 ] 5 [ 6 ]
+
+-}
 selectWhileLoopBy : Int -> SelectList a -> SelectList a
 selectWhileLoopBy =
     Select.whileLoopBy
