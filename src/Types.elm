@@ -18,6 +18,10 @@ type SelectList a
     = SelectList (List a) a (List a)
 
 
+
+-- Constructor
+
+
 fromList : List a -> Maybe (SelectList a)
 fromList list =
     case list of
@@ -36,6 +40,10 @@ fromLists before a after =
 singleton : a -> SelectList a
 singleton a =
     SelectList [] a []
+
+
+
+-- Destructor
 
 
 toTuple : SelectList a -> ( List a, a, List a )
@@ -61,6 +69,10 @@ listBefore (SelectList xs _ _) =
 listAfter : SelectList a -> List a
 listAfter (SelectList _ _ xs) =
     xs
+
+
+
+-- helper
 
 
 reverseAppend : List a -> List a -> List a
