@@ -15,7 +15,7 @@ import Types exposing (..)
 
 reverse : SelectList a -> SelectList a
 reverse (SelectList before a after) =
-    SelectList (List.reverse after) a (List.reverse before)
+    SelectList after a before
 
 
 delete : SelectList a -> Maybe (SelectList a)
