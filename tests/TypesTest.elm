@@ -35,8 +35,7 @@ types =
                 [ fuzzSegments "fuzz" <|
                     \_ a after ->
                         fromList (a :: after)
-                            |> Maybe.map toTuple
-                            |> Expect.equal (Just ( [], a, after ))
+                            |> equalJustSelectList [] a after
                 , test "empty" <|
                     \_ ->
                         fromList []

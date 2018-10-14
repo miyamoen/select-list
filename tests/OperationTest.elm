@@ -29,14 +29,12 @@ operation =
                 \before a after ->
                     fromLists before a (a :: after)
                         |> delete
-                        |> Maybe.map toTuple
-                        |> Expect.equal (Just ( before, a, after ))
+                        |> equalJustSelectList before a after
             , fuzzSegments "select before" <|
                 \before a _ ->
                     fromLists (List.reverse <| a :: before) a []
                         |> delete
-                        |> Maybe.map toTuple
-                        |> Expect.equal (Just ( List.reverse before, a, [] ))
+                        |> equalJustSelectList (List.reverse before) a []
             , fuzz int "Nothing" <|
                 \a ->
                     fromLists [] a []

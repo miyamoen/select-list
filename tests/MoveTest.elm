@@ -104,8 +104,3 @@ move =
                     |> isLast
                     |> Expect.true "should be last"
         ]
-
-
-lengthFuzz : String -> (List Int -> ( Int, Int ) -> List Int -> Expectation) -> Test
-lengthFuzz =
-    fuzz3 (list int) (tuple ( int, int )) (list int)

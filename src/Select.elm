@@ -52,7 +52,7 @@ by n (SelectList before a after) =
                 )
 
     else if n < 0 then
-        splitAt n before
+        splitAt -n before
             |> Maybe.map
                 (\( nextAfter, next, nextBefore ) ->
                     SelectList
@@ -140,7 +140,7 @@ splitAt : Int -> List a -> Maybe ( List a, a, List a )
 splitAt n list =
     let
         ( before, rest ) =
-            ( List.take n list, List.drop n list )
+            ( List.take (n - 1) list, List.drop (n - 1) list )
     in
     case rest of
         a :: after ->
