@@ -4,7 +4,7 @@ import Browser
 import Html exposing (Html, div, text)
 import Html.Attributes as Attributes
 import Html.Events as Events
-import SelectList exposing (Direction(..), SelectList)
+import SelectList exposing (SelectList)
 
 
 
@@ -71,7 +71,7 @@ view : Model -> Html Msg
 view model =
     div []
         [ div [] <|
-            SelectList.mapBy_ renderRow model.todos
+            SelectList.selectedMapForList renderRow model.todos
         , div []
             [ text "Results:"
             , div [ Attributes.style "padding-left" "1em" ] <|
@@ -88,7 +88,7 @@ renderRow selected =
             [ Attributes.type_ "text"
             , Events.onInput
                 (\str ->
-                    SelectList.set str selected
+                    SelectList.replaceSelected str selected
                         |> SelectList.toList
                         |> UpdateTodo
                 )
@@ -98,7 +98,7 @@ renderRow selected =
         , Html.button
             [ Attributes.type_ "button"
             , Events.onClick
-                (SelectList.delete After selected
+                (SelectList.delete selected
                     |> Maybe.map SelectList.toList
                     |> Maybe.withDefault []
                     |> UpdateTodo
@@ -109,7 +109,7 @@ renderRow selected =
         , Html.button
             [ Attributes.type_ "button"
             , Events.onClick
-                (SelectList.attempt (SelectList.moveSelection Before 1) selected
+                (SelectList.moveBy -1 selected
                     |> SelectList.toList
                     |> UpdateTodo
                 )
@@ -119,7 +119,7 @@ renderRow selected =
         , Html.button
             [ Attributes.type_ "button"
             , Events.onClick
-                (SelectList.attempt (SelectList.moveSelection After 1) selected
+                (SelectList.moveBy 1 selected
                     |> SelectList.toList
                     |> UpdateTodo
                 )

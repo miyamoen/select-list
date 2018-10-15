@@ -48,10 +48,11 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ClickNumber selected ->
+        ClickNumber selectList ->
             ( { model
                 | nums =
-                    SelectList.toList <| SelectList.modify ((+) 1) selected
+                    SelectList.toList <|
+                        SelectList.updateSelected ((+) 1) selectList
               }
             , Cmd.none
             )
@@ -63,16 +64,14 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div [] <| SelectList.mapBy_ renderRow model.nums
+    div [] <| SelectList.selectedMapForList renderRow model.nums
 
 
 renderRow : SelectList Int -> Html Msg
 renderRow selected =
     div
-        [ Events.onClick (ClickNumber selected)
-        ]
-        [ text <| String.fromInt <| SelectList.selected selected
-        ]
+        [ Events.onClick (ClickNumber selected) ]
+        [ text <| String.fromInt <| SelectList.selected selected ]
 
 
 
