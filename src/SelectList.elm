@@ -492,7 +492,7 @@ selectBeforeIf =
 
     fromLists [ 1, 2 ] 3 [ 4, 5, 6 ]
         |> selectAfterIf isOdd
-        == fromLists [ 1, 2, 3, 4 ] 5 [ 6 ]
+        == Just (fromLists [ 1, 2, 3, 4 ] 5 [ 6 ])
 
 -}
 selectAfterIf : (a -> Bool) -> SelectList a -> Maybe (SelectList a)
