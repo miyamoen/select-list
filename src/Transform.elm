@@ -1,6 +1,7 @@
 module Transform exposing
     ( map, mapBefore, mapAfter
     , updateSelected, updateBefore, updateAfter
+    , indexedMap, indexedMap_
     , Position(..), selectedMap, selectedMapForList
     )
 
@@ -8,6 +9,7 @@ module Transform exposing
 
 @docs map, mapBefore, mapAfter
 @docs updateSelected, updateBefore, updateAfter
+@docs indexedMap, indexedMap_
 @docs Position, selectedMap, selectedMapForList
 
 -}
@@ -22,8 +24,8 @@ map f (SelectList before a after) =
 
 
 mapBefore : (a -> a) -> SelectList a -> SelectList a
-mapBefore f list =
-    updateBefore (List.map f) list
+mapBefore f (SelectList before a after) =
+    SelectList (List.map f before) a after
 
 
 mapAfter : (a -> a) -> SelectList a -> SelectList a
@@ -46,6 +48,45 @@ updateAfter f (SelectList before a after) =
     SelectList before a (f after)
 
 
+{-| Relative coordinates
+-}
+indexedMap : (Int -> a -> b) -> SelectList a -> List b
+indexedMap f (SelectList before a after) =
+    let
+        newBefore =
+            List.indexedMap
+                (\index -> f (-1 * (1 + index)))
+                before
+
+        newAfter =
+            List.indexedMap
+                (\index -> f (1 + index))
+                after
+    in
+    reverseAppend newBefore (f 0 a :: newAfter)
+
+
+{-| Absolute coordinates
+-}
+indexedMap_ : (Bool -> Int -> a -> b) -> SelectList a -> List b
+indexedMap_ f (SelectList before a after) =
+    let
+        targetIndex =
+            List.length before
+
+        newBefore =
+            List.indexedMap
+                (\index -> f False (targetIndex - 1 - index))
+                before
+
+        newAfter =
+            List.indexedMap
+                (\index -> f False (targetIndex + 1 + index))
+                after
+    in
+    reverseAppend newBefore (f True targetIndex a :: newAfter)
+
+
 type Position
     = BeforeSelected
     | Selected
@@ -56,21 +97,22 @@ selectedMap : (Position -> SelectList a -> b) -> SelectList a -> List b
 selectedMap f list =
     let
         before =
-            Select.allBefore list
+            Select.allBeforeHelp list
                 |> List.map (f BeforeSelected)
 
         after =
             Select.allAfter list
                 |> List.map (f AfterSelected)
     in
-    before ++ f Selected list :: after
+    reverseAppend before (f Selected list :: after)
 
 
 selectedMapForList : (SelectList a -> b) -> List a -> List b
 selectedMapForList f list =
     case fromList list of
         Just selectList ->
-            selectedMap (always f) selectList
+            Select.all selectList
+                |> List.map f
 
         Nothing ->
             []

@@ -9,6 +9,7 @@ module SelectList exposing
     , updateSelected, updateBefore, updateAfter
     , replaceSelected, replaceBefore, replaceAfter
     , Position(..), selectedMap, selectedMapForList
+    , indexedMap, indexedMap_
     , moveBy, moveWhileLoopBy, moveToHead, moveToLast
     , selectBeforeIf, selectAfterIf
     , selectBy, selectWhileLoopBy, selectHead, selectLast
@@ -90,6 +91,8 @@ Alias of update function.
 ## Feature Functions
 
 @docs Position, selectedMap, selectedMapForList
+
+@docs indexedMap, indexedMap_
 
 
 # Move
@@ -807,3 +810,45 @@ Use this instead of `indexedMap`.
 selectedMapForList : (SelectList a -> b) -> List a -> List b
 selectedMapForList =
     Transform.selectedMapForList
+
+
+{-| Apply a function to every element of a `SelectList`.
+
+The transform function receives an index and an element.
+
+A problem with `selectedMap` is to produce many `SelectList`s. `indexedMap` solves it.
+
+The index is relative. We can create new list with original list and relative index.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> indexedMap (\index elm -> ( index, elm * 2 ))
+        == [ ( -3, 2 )
+           , ( -2, 4 )
+           , ( -1, 6 )
+           , ( 0, 8 )
+           , ( 1, 10 )
+           , ( 2, 12 )
+           ]
+
+-}
+indexedMap : (Int -> a -> b) -> SelectList a -> List b
+indexedMap =
+    Transform.indexedMap
+
+
+{-| Absolute index version.
+
+    fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
+        |> indexedMap_ (\selected index elm -> ( selected, index, 2 * elm ))
+        == [ ( False, 0, 2 )
+           , ( False, 1, 4 )
+           , ( False, 2, 6 )
+           , ( True, 3, 8 )
+           , ( False, 4, 10 )
+           , ( False, 5, 12 )
+           ]
+
+-}
+indexedMap_ : (Bool -> Int -> a -> b) -> SelectList a -> List b
+indexedMap_ =
+    Transform.indexedMap_

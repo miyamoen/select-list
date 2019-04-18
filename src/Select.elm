@@ -2,6 +2,7 @@ module Select exposing
     ( beforeIf, afterIf
     , by, whileLoopBy, head, last
     , all, allBefore, allAfter
+    , allBeforeHelp
     )
 
 {-|
@@ -94,19 +95,41 @@ last ((SelectList before a after) as original) =
 
 all : SelectList a -> List (SelectList a)
 all list =
-    allBefore list ++ (list :: allAfter list)
+    reverseAppend (allBeforeHelp list) (list :: allAfter list)
 
 
 allBefore : SelectList a -> List (SelectList a)
-allBefore ((SelectList before _ _) as original) =
-    List.range (-1 * List.length before) -1
-        |> List.filterMap (\n -> by n original)
+allBefore list =
+    allBeforeHelp list
+        |> List.reverse
+
+
+allBeforeHelp : SelectList a -> List (SelectList a)
+allBeforeHelp (SelectList before a after) =
+    case before of
+        x :: xs ->
+            let
+                next =
+                    SelectList xs x (a :: after)
+            in
+            next :: allBeforeHelp next
+
+        [] ->
+            []
 
 
 allAfter : SelectList a -> List (SelectList a)
-allAfter ((SelectList _ _ after) as original) =
-    List.range 1 (List.length after)
-        |> List.filterMap (\n -> by n original)
+allAfter (SelectList before a after) =
+    case after of
+        x :: xs ->
+            let
+                next =
+                    SelectList (a :: before) x xs
+            in
+            next :: allAfter next
+
+        [] ->
+            []
 
 
 
