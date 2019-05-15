@@ -792,14 +792,14 @@ The transform function receives a `SelectList` which selects a focused element.
 
 Use in view.
 
-    view : SelectList String -> Html Msg
+    view : List String -> Html Msg
     view selectList =
         ul [] <|
             SelectList.selectedMapForList
                 (\item ->
                     li [ onClick (Set <| SelectList.toList <| SelectList.update updateFunction item) ]
                         [ text <| toString <| SelectList.index item
-                        , toString <| SelectList.selected item
+                        , text <| toString <| SelectList.selected item
                         ]
                 )
                 selectList
