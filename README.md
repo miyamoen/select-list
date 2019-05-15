@@ -20,7 +20,7 @@ Use `selectedMap` in view.
                 (\position item ->
                     li [ onClick (Set item) ]
                         [ text <| toString <| SelectList.index item
-                        , toString <| SelectList.selected item
+                        , text <| toString <| SelectList.selected item
                         ]
                 )
                 selectList
