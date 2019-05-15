@@ -588,7 +588,6 @@ selectAll =
         == [ fromLists [] 1 [ 2, 3, 4, 5, 6 ]
            , fromLists [ 1 ] 2 [ 3, 4, 5, 6 ]
            , fromLists [ 1, 2 ] 3 [ 4, 5, 6 ]
-           , fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
            ]
 
 -}
