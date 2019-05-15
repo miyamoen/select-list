@@ -181,7 +181,7 @@ singleton =
 
     fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
         |> toTuple
-        == ( 1, 2, 3 ) 4 ( 5, 6 )
+        == ( [ 1, 2, 3 ], 4, [ 5, 6 ] )
 
 -}
 toTuple : SelectList a -> ( List a, a, List a )
