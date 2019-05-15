@@ -480,7 +480,7 @@ moveToLast =
 
     fromLists [ 1, 2 ] 3 [ 4, 5, 6 ]
         |> selectBeforeIf isOdd
-        == Just (fromLists [ 0 ] 1 [ 2, 3, 4, 5, 6 ])
+        == Just (fromLists [] 1 [ 2, 3, 4, 5, 6 ])
 
 -}
 selectBeforeIf : (a -> Bool) -> SelectList a -> Maybe (SelectList a)
