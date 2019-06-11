@@ -36,7 +36,7 @@ Use `selectedMap` in view.
                 (\position item ->
                     li [ onClick (Set item) ]
                         [ text <| toString <| SelectList.index item
-                        , toString <| SelectList.selected item
+                        , text <| toString <| SelectList.selected item
                         ]
                 )
                 selectList
@@ -181,7 +181,7 @@ singleton =
 
     fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
         |> toTuple
-        == ( 1, 2, 3 ) 4 ( 5, 6 )
+        == ( [ 1, 2, 3 ], 4, [ 5, 6 ] )
 
 -}
 toTuple : SelectList a -> ( List a, a, List a )
@@ -480,7 +480,7 @@ moveToLast =
 
     fromLists [ 1, 2 ] 3 [ 4, 5, 6 ]
         |> selectBeforeIf isOdd
-        == Just (fromLists [ 0 ] 1 [ 2, 3, 4, 5, 6 ])
+        == Just (fromLists [] 1 [ 2, 3, 4, 5, 6 ])
 
 -}
 selectBeforeIf : (a -> Bool) -> SelectList a -> Maybe (SelectList a)
@@ -588,7 +588,6 @@ selectAll =
         == [ fromLists [] 1 [ 2, 3, 4, 5, 6 ]
            , fromLists [ 1 ] 2 [ 3, 4, 5, 6 ]
            , fromLists [ 1, 2 ] 3 [ 4, 5, 6 ]
-           , fromLists [ 1, 2, 3 ] 4 [ 5, 6 ]
            ]
 
 -}
@@ -761,7 +760,7 @@ Use in view.
                 (\position item ->
                     li [ onClick (Set item) ]
                         [ text <| toString <| SelectList.index item
-                        , toString <| SelectList.selected item
+                        , text <| toString <| SelectList.selected item
                         ]
                 )
                 selectList
@@ -792,14 +791,14 @@ The transform function receives a `SelectList` which selects a focused element.
 
 Use in view.
 
-    view : SelectList String -> Html Msg
+    view : List String -> Html Msg
     view selectList =
         ul [] <|
             SelectList.selectedMapForList
                 (\item ->
                     li [ onClick (Set <| SelectList.toList <| SelectList.update updateFunction item) ]
                         [ text <| toString <| SelectList.index item
-                        , toString <| SelectList.selected item
+                        , text <| toString <| SelectList.selected item
                         ]
                 )
                 selectList
